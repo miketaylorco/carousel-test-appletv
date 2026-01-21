@@ -500,13 +500,22 @@
         this.carousel.addEventListener('mouseenter', () => this.pause());
         this.carousel.addEventListener('mouseleave', () => this.resume());
 
-        // Touch support
+        // Touch support for main slide area (not indicators)
         let touchStartX = 0;
+        let touchStartedOnIndicators = false;
+
         this.carousel.addEventListener('touchstart', (e) => {
-          touchStartX = e.touches[0].clientX;
+          // Check if touch started on the indicators area
+          touchStartedOnIndicators = e.target.closest('.indicators') !== null;
+          if (!touchStartedOnIndicators) {
+            touchStartX = e.touches[0].clientX;
+          }
         }, { passive: true });
 
         this.carousel.addEventListener('touchend', (e) => {
+          // Ignore if touch started on indicators
+          if (touchStartedOnIndicators) return;
+
           const touchEndX = e.changedTouches[0].clientX;
           const diff = touchStartX - touchEndX;
           if (Math.abs(diff) > 50) {
