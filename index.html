@@ -212,13 +212,30 @@
     .indicators {
       position: absolute;
       bottom: 3%;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
       display: flex;
       gap: 12px;
       z-index: 20;
       padding: 0 20px;
-      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    /* Center cards when they fit in viewport */
+    .indicators::before,
+    .indicators::after {
+      content: '';
+      flex: 1 0 0;
+      min-width: 0;
+    }
+
+    .indicators::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
     }
 
     .indicator-card {
@@ -230,10 +247,12 @@
       overflow: hidden;
       cursor: pointer;
       width: 280px;
+      min-width: 280px; /* Prevent shrinking */
       min-height: 80px;
       padding: 8px;
       padding-top: 11px; /* Extra space for progress bar */
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      flex-shrink: 0; /* Prevent shrinking */
     }
 
     .indicator-card:hover {
@@ -728,6 +747,35 @@
             card.classList.add('active');
           }
         });
+
+        // Scroll active card into view
+        this.scrollActiveCardIntoView(activeIndex);
+      }
+
+      scrollActiveCardIntoView(index) {
+        const card = this.indicators[index];
+        if (!card) return;
+
+        const container = this.indicatorsContainer;
+        const cardRect = card.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Check if card is fully visible
+        const isFullyVisible =
+          cardRect.left >= containerRect.left &&
+          cardRect.right <= containerRect.right;
+
+        if (!isFullyVisible) {
+          // Scroll to center the card in the container
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const containerCenter = container.offsetWidth / 2;
+          const scrollTarget = cardCenter - containerCenter;
+
+          container.scrollTo({
+            left: scrollTarget,
+            behavior: 'smooth'
+          });
+        }
       }
 
       startAutoAdvance() {
