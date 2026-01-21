@@ -62,26 +62,31 @@
       left: 0;
       width: 100%;
       height: 100%;
+    }
+
+    .slide-image img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       /* Start slightly offset for parallax effect */
       transform: translateX(8%);
       transition: transform 1.1s cubic-bezier(0.25, 1, 0.5, 1); /* Ease-out: fast start, gradual finish */
     }
 
-    .slide.active .slide-image {
+    .slide.active .slide-image img {
       transform: translateX(0);
     }
 
-    .slide.exiting .slide-image {
+    .slide.exiting .slide-image img {
       transform: translateX(-8%);
     }
 
     /* Reverse parallax for 'prev' direction */
-    .carousel.direction-prev .slide:not(.active):not(.exiting) .slide-image {
+    .carousel.direction-prev .slide:not(.active):not(.exiting) .slide-image img {
       transform: translateX(-8%);
     }
 
-    .carousel.direction-prev .slide.exiting .slide-image {
+    .carousel.direction-prev .slide.exiting .slide-image img {
       transform: translateX(8%);
     }
 
@@ -384,22 +389,42 @@
   <div class="carousel" id="carousel">
     <!-- Slides (images with overlay) -->
     <div class="slide active" data-index="0">
-      <img class="slide-image" src="https://picsum.photos/id/1018/1920/1080" alt="Movie backdrop">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1018/640/640 1x, https://picsum.photos/id/1018/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1018/1024/1024 1x, https://picsum.photos/id/1018/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1018/1920/1080 1x, https://picsum.photos/id/1018/3840/2160 2x">
+        <img src="https://picsum.photos/id/1018/1920/1080" alt="The Mountain's Edge">
+      </picture>
       <div class="slide-darken"></div>
       <div class="slide-overlay"></div>
     </div>
     <div class="slide" data-index="1">
-      <img class="slide-image" src="https://picsum.photos/id/1015/1920/1080" alt="Movie backdrop">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1015/640/640 1x, https://picsum.photos/id/1015/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1015/1024/1024 1x, https://picsum.photos/id/1015/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1015/1920/1080 1x, https://picsum.photos/id/1015/3840/2160 2x">
+        <img src="https://picsum.photos/id/1015/1920/1080" alt="River of Dreams">
+      </picture>
       <div class="slide-darken"></div>
       <div class="slide-overlay"></div>
     </div>
     <div class="slide" data-index="2">
-      <img class="slide-image" src="https://picsum.photos/id/1019/1920/1080" alt="Movie backdrop">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1019/640/640 1x, https://picsum.photos/id/1019/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1019/1024/1024 1x, https://picsum.photos/id/1019/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1019/1920/1080 1x, https://picsum.photos/id/1019/3840/2160 2x">
+        <img src="https://picsum.photos/id/1019/1920/1080" alt="Beneath Still Waters">
+      </picture>
       <div class="slide-darken"></div>
       <div class="slide-overlay"></div>
     </div>
     <div class="slide" data-index="3">
-      <img class="slide-image" src="https://picsum.photos/id/1016/1920/1080" alt="Movie backdrop">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1016/640/640 1x, https://picsum.photos/id/1016/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1016/1024/1024 1x, https://picsum.photos/id/1016/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1016/1920/1080 1x, https://picsum.photos/id/1016/3840/2160 2x">
+        <img src="https://picsum.photos/id/1016/1920/1080" alt="The Last Frontier">
+      </picture>
       <div class="slide-darken"></div>
       <div class="slide-overlay"></div>
     </div>
@@ -532,8 +557,9 @@
         // Extract data from slides and text content
         this.slideData = this.slides.map((slide, index) => {
           const textContent = this.textContents[index];
+          const imgElement = slide.querySelector('.slide-image img');
           return {
-            image: slide.querySelector('.slide-image').src,
+            image: imgElement ? imgElement.src : slide.querySelector('.slide-image').src,
             title: textContent.querySelector('h1').textContent,
             category: textContent.querySelector('.genre').textContent,
           };
@@ -610,10 +636,10 @@
         const currentText = this.textContents[prevIndex];
         const nextText = this.textContents[index];
 
-        // Get child elements
-        const currentImg = currentSlide.querySelector('.slide-image');
+        // Get child elements (target img inside picture for transitions)
+        const currentImg = currentSlide.querySelector('.slide-image img');
         const currentDarken = currentSlide.querySelector('.slide-darken');
-        const nextImg = nextSlide.querySelector('.slide-image');
+        const nextImg = nextSlide.querySelector('.slide-image img');
         const nextDarken = nextSlide.querySelector('.slide-darken');
 
         // Fade out current text immediately
@@ -700,8 +726,8 @@
           slide.style.transition = 'none';
           slide.classList.remove('active', 'exiting');
 
-          // Also disable child element transitions
-          const img = slide.querySelector('.slide-image');
+          // Also disable child element transitions (target img inside picture)
+          const img = slide.querySelector('.slide-image img');
           const darken = slide.querySelector('.slide-darken');
           if (img) img.style.transition = 'none';
           if (darken) darken.style.transition = 'none';
@@ -713,7 +739,7 @@
         // Re-enable transitions
         this.slides.forEach(slide => {
           slide.style.transition = '';
-          const img = slide.querySelector('.slide-image');
+          const img = slide.querySelector('.slide-image img');
           const darken = slide.querySelector('.slide-darken');
           if (img) img.style.transition = '';
           if (darken) darken.style.transition = '';
