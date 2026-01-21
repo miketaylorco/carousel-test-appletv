@@ -69,7 +69,7 @@
       height: 100%;
       object-fit: cover;
       /* Start slightly offset for parallax effect */
-      transform: translateX(8%);
+      transform: translateX(16%);
       transition: transform 0.8s cubic-bezier(0.12, 1, 0.2, 1); /* Ease-out: aggressive start, gradual finish */
     }
 
@@ -78,16 +78,16 @@
     }
 
     .slide.exiting .slide-image img {
-      transform: translateX(-8%);
+      transform: translateX(-16%);
     }
 
     /* Reverse parallax for 'prev' direction */
     .carousel.direction-prev .slide:not(.active):not(.exiting) .slide-image img {
-      transform: translateX(-8%);
+      transform: translateX(-16%);
     }
 
     .carousel.direction-prev .slide.exiting .slide-image img {
-      transform: translateX(8%);
+      transform: translateX(16%);
     }
 
     /* Darkening overlay for incoming slides */
