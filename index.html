@@ -183,10 +183,43 @@
     .text-content .meta {
       font-size: 0.875rem;
       color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 1.5rem;
     }
 
     .text-content .meta span {
       margin-right: 1rem;
+    }
+
+    .text-content .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.75rem;
+      background: rgba(255, 255, 255, 1);
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .text-content .cta-button:hover {
+      background: rgba(255, 255, 255, 0.85);
+      transform: scale(1.02);
+    }
+
+    .text-content .cta-button:focus-visible {
+      outline: 2px solid #00b4d8;
+      outline-offset: 2px;
+    }
+
+    .text-content .cta-button svg {
+      width: 1rem;
+      height: 1rem;
+      fill: currentColor;
     }
 
     /* Responsive typography */
@@ -233,6 +266,12 @@
       .text-content .meta {
         font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 1rem;
+      }
+
+      .text-content .cta-button {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
       }
     }
 
@@ -279,9 +318,9 @@
       display: flex;
       gap: 12px;
       z-index: 20;
-      padding: 0 20px;
+      padding: 6px 20px;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none; /* Firefox */
@@ -532,6 +571,10 @@
         <span>2h 14m</span>
         <span>PG-13</span>
       </div>
+      <button class="cta-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+        Watch Now
+      </button>
     </div>
     <div class="text-content" data-index="1">
       <div class="genre">Nature / Documentary</div>
@@ -542,6 +585,10 @@
         <span>1h 42m</span>
         <span>G</span>
       </div>
+      <button class="cta-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+        Watch Now
+      </button>
     </div>
     <div class="text-content" data-index="2">
       <div class="genre">Thriller / Mystery</div>
@@ -552,6 +599,10 @@
         <span>2h 01m</span>
         <span>R</span>
       </div>
+      <button class="cta-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+        Watch Now
+      </button>
     </div>
     <div class="text-content" data-index="3">
       <div class="genre">Sci-Fi / Action</div>
@@ -562,6 +613,10 @@
         <span>2h 28m</span>
         <span>PG-13</span>
       </div>
+      <button class="cta-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
+        Watch Now
+      </button>
     </div>
 
     <!-- Navigation -->
