@@ -283,16 +283,6 @@
       height: 100%;
       width: 0%;
       background: #00b4d8;
-      transition: width 0.1s linear;
-    }
-
-    .indicator-card.active .progress {
-      animation: progress var(--duration) linear forwards;
-    }
-
-    @keyframes progress {
-      from { width: 0%; }
-      to { width: 100%; }
     }
 
     /* Thumbnail */
@@ -376,16 +366,18 @@
       display: block;
     }
 
-    .carousel.paused .indicator-card .pause-btn .icon-play {
+    /* Only show play icon when explicitly paused by user, not hover pause */
+    .carousel.user-paused .indicator-card .pause-btn .icon-play {
       display: block;
     }
 
-    .carousel.paused .indicator-card .pause-btn .icon-pause {
+    .carousel.user-paused .indicator-card .pause-btn .icon-pause {
       display: none;
     }
   </style>
 </head>
 <body>
+  <script src="https://tristen.ca/hoverintent/dist/hoverintent.min.js"></script>
   <div class="carousel" id="carousel">
     <!-- Slides (images with overlay) -->
     <div class="slide active" data-index="0">
@@ -492,10 +484,17 @@
         this.currentIndex = 0;
         this.isTransitioning = false;
         this.isPaused = false;
+        this.userPaused = false; // Explicit pause via button/spacebar
+        this.hoverPaused = false; // Pause due to hovering over text content
         this.autoAdvanceInterval = options.autoAdvanceInterval || 6000;
         this.transitionDuration = options.transitionDuration || 900;
         this.transitionTimeout = null;
         this.textTimeout = null;
+
+        // Progress tracking
+        this.progressInterval = null;
+        this.elapsedTime = 0;
+        this.lastTickTime = null;
 
         this.init();
       }
@@ -503,9 +502,6 @@
       init() {
         // Create indicators
         this.createIndicators();
-
-        // Set CSS variable for progress animation
-        this.carousel.style.setProperty('--duration', `${this.autoAdvanceInterval}ms`);
 
         // Bind events
         this.prevButton.addEventListener('click', () => this.prev());
@@ -521,9 +517,21 @@
           }
         });
 
-        // Pause on hover
-        this.carousel.addEventListener('mouseenter', () => this.pause());
-        this.carousel.addEventListener('mouseleave', () => this.resume());
+        // Pause when hovering over text content (where CTAs may be)
+        // Uses hoverintent to detect intentional hover, not just mouse passing through
+        this.hoverIntentListeners = [];
+        this.textContents.forEach(textContent => {
+          const listener = hoverintent(
+            textContent,
+            () => this.hoverPause(),
+            () => this.hoverResume()
+          ).options({
+            sensitivity: 7,  // pixels mouse can move while waiting
+            interval: 100,   // ms between checking mouse position
+            timeout: 150     // small delay before mouseout fires to prevent flicker
+          });
+          this.hoverIntentListeners.push(listener);
+        });
 
         // Touch support for main slide area (not indicators)
         let touchStartX = 0;
@@ -771,12 +779,9 @@
         this.indicators.forEach((card, index) => {
           card.classList.remove('active');
 
-          // Reset progress animation and any inline width
+          // Reset progress width for non-active cards
           const progress = card.querySelector('.progress');
-          progress.style.animation = 'none';
-          progress.style.width = '';
-          progress.offsetHeight; // Force reflow
-          progress.style.animation = '';
+          progress.style.width = '0%';
 
           if (index === activeIndex) {
             card.classList.add('active');
@@ -785,6 +790,50 @@
 
         // Scroll active card into view
         this.scrollActiveCardIntoView(activeIndex);
+      }
+
+      // Progress bar control methods
+      startProgress() {
+        this.lastTickTime = Date.now();
+
+        // Clear any existing interval
+        if (this.progressInterval) {
+          clearInterval(this.progressInterval);
+        }
+
+        const activeCard = this.indicators[this.currentIndex];
+        const progress = activeCard.querySelector('.progress');
+
+        this.progressInterval = setInterval(() => {
+          const now = Date.now();
+          this.elapsedTime += now - this.lastTickTime;
+          this.lastTickTime = now;
+
+          const percentage = Math.min((this.elapsedTime / this.autoAdvanceInterval) * 100, 100);
+          progress.style.width = `${percentage}%`;
+
+          if (this.elapsedTime >= this.autoAdvanceInterval) {
+            this.next();
+          }
+        }, 50);
+      }
+
+      pauseProgress() {
+        if (this.progressInterval) {
+          clearInterval(this.progressInterval);
+          this.progressInterval = null;
+        }
+      }
+
+      resetProgress() {
+        this.pauseProgress();
+        this.elapsedTime = 0;
+
+        // Reset all progress bars
+        this.indicators.forEach(card => {
+          const progress = card.querySelector('.progress');
+          progress.style.width = '0%';
+        });
       }
 
       scrollActiveCardIntoView(index) {
@@ -814,45 +863,57 @@
       }
 
       startAutoAdvance() {
-        this.autoAdvanceTimer = setInterval(() => {
-          if (!this.isPaused) {
-            this.next();
-          }
-        }, this.autoAdvanceInterval);
+        if (!this.isPaused) {
+          this.startProgress();
+        }
       }
 
       resetAutoAdvance() {
-        clearInterval(this.autoAdvanceTimer);
+        this.resetProgress();
         if (!this.isPaused) {
-          this.updateIndicators(this.currentIndex);
-          this.startAutoAdvance();
+          this.startProgress();
         }
       }
 
-      pause() {
-        this.isPaused = true;
-        this.carousel.classList.add('paused');
+      // Update the paused state based on userPaused and hoverPaused
+      updatePausedState() {
+        const shouldBePaused = this.userPaused || this.hoverPaused;
 
-        // Pause indicator animation on active card
-        const activeCard = this.indicators[this.currentIndex];
-        const progress = activeCard.querySelector('.progress');
-        const computedStyle = getComputedStyle(progress);
-        progress.style.width = computedStyle.width;
-        progress.style.animation = 'none';
-      }
-
-      resume() {
-        this.isPaused = false;
-        this.carousel.classList.remove('paused');
-        this.resetAutoAdvance();
-      }
-
-      togglePause() {
-        if (this.isPaused) {
-          this.resume();
+        // Update user-paused class (for button icon display)
+        if (this.userPaused) {
+          this.carousel.classList.add('user-paused');
         } else {
-          this.pause();
+          this.carousel.classList.remove('user-paused');
         }
+
+        if (shouldBePaused && !this.isPaused) {
+          // Transitioning to paused
+          this.isPaused = true;
+          this.carousel.classList.add('paused');
+          this.pauseProgress();
+        } else if (!shouldBePaused && this.isPaused) {
+          // Transitioning to unpaused - continue from where we left off
+          this.isPaused = false;
+          this.carousel.classList.remove('paused');
+          this.startProgress();
+        }
+      }
+
+      // Hover pause (when hovering over text content)
+      hoverPause() {
+        this.hoverPaused = true;
+        this.updatePausedState();
+      }
+
+      hoverResume() {
+        this.hoverPaused = false;
+        this.updatePausedState();
+      }
+
+      // Explicit pause via button or spacebar
+      togglePause() {
+        this.userPaused = !this.userPaused;
+        this.updatePausedState();
       }
     }
 
