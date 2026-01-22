@@ -129,9 +129,9 @@
       height: 100%;
       background: linear-gradient(
         to right,
-        rgba(0, 0, 0, 0.7) 0%,
-        rgba(0, 0, 0, 0.4) 40%,
-        rgba(0, 0, 0, 0.1) 70%,
+        rgba(0, 0, 0, 0.85) 0%,
+        rgba(0, 0, 0, 0.6) 40%,
+        rgba(0, 0, 0, 0.25) 70%,
         transparent 100%
       );
     }
@@ -162,7 +162,7 @@
       margin-bottom: 0.5rem;
     }
 
-    .text-content h1 {
+    .text-content h2 {
       font-size: 3.5rem;
       font-weight: 700;
       line-height: 1.1;
@@ -180,7 +180,7 @@
 
     .text-content .meta {
       font-size: 0.875rem;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.85);
     }
 
     .text-content .meta span {
@@ -193,7 +193,7 @@
         max-width: 450px;
       }
 
-      .text-content h1 {
+      .text-content h2 {
         font-size: 2.75rem;
       }
 
@@ -214,7 +214,7 @@
         font-size: 0.75rem;
       }
 
-      .text-content h1 {
+      .text-content h2 {
         font-size: 2rem;
         margin-bottom: 0.75rem;
       }
@@ -230,6 +230,7 @@
 
       .text-content .meta {
         font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.85);
       }
     }
 
@@ -385,7 +386,7 @@
       right: 8px;
       width: 24px;
       height: 24px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(0, 0, 0, 0.6);
       border: none;
       border-radius: 50%;
       cursor: pointer;
@@ -398,7 +399,7 @@
     }
 
     .indicator-card .pause-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.8);
     }
 
     .indicator-card.active .pause-btn {
@@ -428,11 +429,55 @@
     .carousel.user-paused .indicator-card .pause-btn .icon-pause {
       display: none;
     }
+
+    /* Screen reader only - visually hidden but accessible */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus visible styles for keyboard navigation */
+    .nav-button:focus-visible {
+      outline: 2px solid #00b4d8;
+      outline-offset: 2px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .indicator-card:focus-visible {
+      outline: 2px solid #00b4d8;
+      outline-offset: 2px;
+    }
+
+    .pause-btn:focus-visible {
+      outline: 2px solid #00b4d8;
+      outline-offset: 1px;
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .slide,
+      .slide-image img,
+      .slide-darken,
+      .text-content,
+      .nav-button,
+      .indicator-card,
+      .indicator-card .progress,
+      .pause-btn {
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body>
   <script src="https://tristen.ca/hoverintent/dist/hoverintent.min.js"></script>
-  <div class="carousel" id="carousel">
+  <section class="carousel" id="carousel" role="region" aria-roledescription="carousel" aria-label="Featured shows">
     <!-- Slides (images with overlay) -->
     <div class="slide active" data-index="0">
       <picture class="slide-image">
@@ -478,7 +523,7 @@
     <!-- Text overlays (separate from slides for independent fade) -->
     <div class="text-content active" data-index="0">
       <div class="genre">Drama / Adventure</div>
-      <h1>The Mountain's Edge</h1>
+      <h2>The Mountain's Edge</h2>
       <p class="description">A breathtaking journey through the world's most treacherous peaks, where one climber must confront her past to survive.</p>
       <div class="meta">
         <span>2024</span>
@@ -488,7 +533,7 @@
     </div>
     <div class="text-content" data-index="1">
       <div class="genre">Nature / Documentary</div>
-      <h1>River of Dreams</h1>
+      <h2>River of Dreams</h2>
       <p class="description">Follow the incredible migration of salmon through pristine wilderness, a journey of survival spanning thousands of miles.</p>
       <div class="meta">
         <span>2024</span>
@@ -498,7 +543,7 @@
     </div>
     <div class="text-content" data-index="2">
       <div class="genre">Thriller / Mystery</div>
-      <h1>Beneath Still Waters</h1>
+      <h2>Beneath Still Waters</h2>
       <p class="description">When a small lakeside town's secrets begin to surface, detective Sarah Chen discovers the truth runs deeper than anyone imagined.</p>
       <div class="meta">
         <span>2024</span>
@@ -508,7 +553,7 @@
     </div>
     <div class="text-content" data-index="3">
       <div class="genre">Sci-Fi / Action</div>
-      <h1>The Last Frontier</h1>
+      <h2>The Last Frontier</h2>
       <p class="description">In a world transformed by climate change, a team of pioneers ventures into uncharted territory to find humanity's new home.</p>
       <div class="meta">
         <span>2024</span>
@@ -518,12 +563,17 @@
     </div>
 
     <!-- Navigation -->
-    <button class="nav-button prev" aria-label="Previous slide">&#8249;</button>
-    <button class="nav-button next" aria-label="Next slide">&#8250;</button>
+    <nav aria-label="Carousel navigation">
+      <button class="nav-button prev" aria-label="Previous slide">&#8249;</button>
+      <button class="nav-button next" aria-label="Next slide">&#8250;</button>
+    </nav>
+
+    <!-- Live region for screen reader announcements -->
+    <div class="sr-only" aria-live="polite" id="carousel-status"></div>
 
     <!-- Card indicators -->
     <div class="indicators" id="indicators"></div>
-  </div>
+  </section>
 
   <script>
     class Carousel {
@@ -622,7 +672,7 @@
           const imgElement = slide.querySelector('.slide-image img');
           return {
             image: imgElement ? imgElement.src : slide.querySelector('.slide-image').src,
-            title: textContent.querySelector('h1').textContent,
+            title: textContent.querySelector('h2').textContent,
             category: textContent.querySelector('.genre').textContent,
           };
         });
@@ -630,24 +680,27 @@
         const totalSlides = this.slides.length;
 
         this.slideData.forEach((data, index) => {
-          const card = document.createElement('div');
+          const card = document.createElement('button');
+          card.type = 'button';
           card.className = `indicator-card${index === 0 ? ' active' : ''}`;
+          card.setAttribute('aria-label', `Go to slide ${index + 1}: ${data.title}`);
+          card.setAttribute('aria-current', index === 0 ? 'true' : 'false');
           card.innerHTML = `
             <div class="progress-bar"><div class="progress"></div></div>
-            <img class="thumbnail" src="${data.image}" alt="${data.title}">
+            <img class="thumbnail" src="${data.image}" alt="">
             <div class="card-content">
               <div class="card-label">${index + 1}/${totalSlides} ${data.category}</div>
               <div class="card-title">${data.title}</div>
             </div>
-            <button class="pause-btn" aria-label="Pause/Play">
-              <svg class="icon-pause" viewBox="0 0 10 10">
+            <span class="pause-btn" role="button" tabindex="${index === 0 ? '0' : '-1'}" aria-label="Pause carousel" aria-pressed="false">
+              <svg class="icon-pause" viewBox="0 0 10 10" aria-hidden="true">
                 <rect x="1" y="1" width="3" height="8" rx="0.5"/>
                 <rect x="6" y="1" width="3" height="8" rx="0.5"/>
               </svg>
-              <svg class="icon-play" viewBox="0 0 10 10">
+              <svg class="icon-play" viewBox="0 0 10 10" aria-hidden="true">
                 <polygon points="2,1 9,5 2,9"/>
               </svg>
-            </button>
+            </span>
           `;
 
           // Click on card navigates to that slide
@@ -658,11 +711,18 @@
             }
           });
 
-          // Pause button click
+          // Pause button click and keyboard activation
           const pauseBtn = card.querySelector('.pause-btn');
           pauseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.togglePause();
+          });
+          pauseBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              this.togglePause();
+            }
           });
 
           this.indicatorsContainer.appendChild(card);
@@ -832,18 +892,33 @@
       updateIndicators(activeIndex) {
         this.indicators.forEach((card, index) => {
           card.classList.remove('active');
+          card.setAttribute('aria-current', 'false');
 
           // Reset progress width for non-active cards
           const progress = card.querySelector('.progress');
           progress.style.width = '0%';
 
+          // Only allow tabbing to pause button in active card
+          const pauseBtn = card.querySelector('.pause-btn');
+          if (pauseBtn) {
+            pauseBtn.setAttribute('tabindex', index === activeIndex ? '0' : '-1');
+          }
+
           if (index === activeIndex) {
             card.classList.add('active');
+            card.setAttribute('aria-current', 'true');
           }
         });
 
         // Scroll active card into view
         this.scrollActiveCardIntoView(activeIndex);
+
+        // Announce slide change to screen readers
+        const title = this.slideData[activeIndex].title;
+        const statusEl = document.getElementById('carousel-status');
+        if (statusEl) {
+          statusEl.textContent = `Slide ${activeIndex + 1} of ${this.slides.length}: ${title}`;
+        }
       }
 
       // Progress bar control methods
@@ -968,6 +1043,22 @@
       togglePause() {
         this.userPaused = !this.userPaused;
         this.updatePausedState();
+        this.updatePauseButtonsAria();
+
+        // Announce pause state to screen readers
+        const statusEl = document.getElementById('carousel-status');
+        if (statusEl) {
+          statusEl.textContent = this.userPaused ? 'Carousel paused' : 'Carousel resumed';
+        }
+      }
+
+      // Update aria attributes on all pause buttons
+      updatePauseButtonsAria() {
+        const pauseBtns = this.indicatorsContainer.querySelectorAll('.pause-btn');
+        pauseBtns.forEach(btn => {
+          btn.setAttribute('aria-pressed', this.userPaused ? 'true' : 'false');
+          btn.setAttribute('aria-label', this.userPaused ? 'Resume carousel' : 'Pause carousel');
+        });
       }
     }
 
