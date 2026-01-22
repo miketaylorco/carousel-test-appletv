@@ -585,7 +585,7 @@
         <span>1h 42m</span>
         <span>G</span>
       </div>
-      <button class="cta-button" type="button">
+      <button class="cta-button" type="button" tabindex="-1">
         <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
         Watch Now
       </button>
@@ -599,7 +599,7 @@
         <span>2h 01m</span>
         <span>R</span>
       </div>
-      <button class="cta-button" type="button">
+      <button class="cta-button" type="button" tabindex="-1">
         <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
         Watch Now
       </button>
@@ -613,7 +613,7 @@
         <span>2h 28m</span>
         <span>PG-13</span>
       </div>
-      <button class="cta-button" type="button">
+      <button class="cta-button" type="button" tabindex="-1">
         <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,3 19,12 5,21"/></svg>
         Watch Now
       </button>
@@ -672,10 +672,6 @@
         document.addEventListener('keydown', (e) => {
           if (e.key === 'ArrowLeft') this.prev();
           if (e.key === 'ArrowRight') this.next();
-          if (e.key === ' ') {
-            e.preventDefault();
-            this.togglePause();
-          }
         });
 
         // Pause when hovering over text content (where CTAs may be)
@@ -823,6 +819,14 @@
 
         // Fade out current text immediately
         currentText.classList.remove('active');
+
+        // Update CTA button tabindex - only active slide's CTA should be tabbable
+        this.textContents.forEach((text, i) => {
+          const ctaBtn = text.querySelector('.cta-button');
+          if (ctaBtn) {
+            ctaBtn.setAttribute('tabindex', i === index ? '0' : '-1');
+          }
+        });
 
         // Clean up ALL other slides to ensure clean state
         this.slides.forEach((slide, i) => {
