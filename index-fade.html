@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apple TV Style Hero Carousel - Fade Transition</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .carousel {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Slide container - fade transition instead of clip-path */
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0; /* Hidden by default */
+      transition: opacity 0.8s cubic-bezier(0.12, 1, 0.2, 1);
+      z-index: 1;
+    }
+
+    .slide.active {
+      opacity: 1; /* Fully visible */
+      z-index: 3; /* Incoming slide on top */
+    }
+
+    .slide.exiting {
+      opacity: 0; /* Fade out */
+      z-index: 2; /* Behind active but above default */
+    }
+
+    /* Image container - extended width to cover parallax movement */
+    .slide-image {
+      position: absolute;
+      top: 0;
+      left: -16%; /* Offset to center the extended image */
+      width: 132%; /* Extra width: 100% + 16% on each side */
+      height: 100%;
+    }
+
+    .slide-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* Start slightly offset for parallax effect */
+      transform: translateX(12.12%); /* 16% of original = 12.12% of 132% */
+      transition: transform 0.8s cubic-bezier(0.12, 1, 0.2, 1);
+    }
+
+    .slide.active .slide-image img {
+      transform: translateX(0);
+    }
+
+    .slide.exiting .slide-image img {
+      transform: translateX(-12.12%); /* -16% of original = -12.12% of 132% */
+    }
+
+    /* Reverse parallax for 'prev' direction */
+    .carousel.direction-prev .slide:not(.active):not(.exiting) .slide-image img {
+      transform: translateX(-12.12%);
+    }
+
+    .carousel.direction-prev .slide.exiting .slide-image img {
+      transform: translateX(12.12%);
+    }
+
+    /* Darkening overlay for incoming slides */
+    .slide-darken {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      opacity: 1;
+      transition: opacity 0.8s cubic-bezier(0.12, 1, 0.2, 1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .slide.active .slide-darken {
+      opacity: 0;
+    }
+
+    .slide.exiting .slide-darken {
+      opacity: 0; /* Keep exiting slide at full brightness */
+    }
+
+    /* Gradient overlay for text readability */
+    .slide-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(0, 0, 0, 0.4) 40%,
+        rgba(0, 0, 0, 0.1) 70%,
+        transparent 100%
+      );
+    }
+
+    /* Text content - positioned outside the clip-path animated element */
+    .text-content {
+      position: absolute;
+      bottom: 15%;
+      left: 5%;
+      max-width: 500px;
+      color: white;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .text-content.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .text-content .genre {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 0.5rem;
+    }
+
+    .text-content h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .text-content .description {
+      font-size: 1.125rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 1.5rem;
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .text-content .meta {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .text-content .meta span {
+      margin-right: 1rem;
+    }
+
+    /* Navigation arrows */
+    .nav-button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 20;
+      transition: background 0.3s ease, transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .nav-button.prev {
+      left: 2%;
+    }
+
+    .nav-button.next {
+      right: 2%;
+    }
+
+    /* Card-style indicators */
+    .indicators {
+      position: absolute;
+      bottom: 3%;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 12px;
+      z-index: 20;
+      padding: 0 20px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    /* Center cards when they fit in viewport */
+    .indicators::before,
+    .indicators::after {
+      content: '';
+      flex: 1 0 0;
+      min-width: 0;
+    }
+
+    .indicators::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .indicator-card {
+      position: relative;
+      display: flex;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      width: 280px;
+      min-width: 280px; /* Prevent shrinking */
+      min-height: 80px;
+      padding: 8px;
+      padding-top: 11px; /* Extra space for progress bar */
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    .indicator-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .indicator-card.active {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Progress bar at top of card */
+    .indicator-card .progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .indicator-card .progress {
+      height: 100%;
+      width: 0%;
+      background: #00b4d8;
+      transition: width 0.1s linear;
+    }
+
+    .indicator-card.active .progress {
+      animation: progress var(--duration) linear forwards;
+    }
+
+    @keyframes progress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    /* Thumbnail */
+    .indicator-card .thumbnail {
+      width: 60px;
+      min-width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    /* Card content */
+    .indicator-card .card-content {
+      flex: 1;
+      padding: 0 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .indicator-card .card-label {
+      font-size: 0.7rem;
+      color: #00b4d8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    .indicator-card .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: white;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Pause button */
+    .indicator-card .pause-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease, background 0.2s ease;
+      padding: 0;
+    }
+
+    .indicator-card .pause-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .indicator-card.active .pause-btn {
+      opacity: 1;
+    }
+
+    .indicator-card .pause-btn svg {
+      width: 10px;
+      height: 10px;
+      fill: white;
+    }
+
+    /* Show play icon when paused */
+    .indicator-card .pause-btn .icon-play {
+      display: none;
+    }
+
+    .indicator-card .pause-btn .icon-pause {
+      display: block;
+    }
+
+    .carousel.paused .indicator-card .pause-btn .icon-play {
+      display: block;
+    }
+
+    .carousel.paused .indicator-card .pause-btn .icon-pause {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="carousel" id="carousel">
+    <!-- Slides (images with overlay) -->
+    <div class="slide active" data-index="0">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1018/640/640 1x, https://picsum.photos/id/1018/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1018/1024/1024 1x, https://picsum.photos/id/1018/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1018/1920/1080 1x, https://picsum.photos/id/1018/3840/2160 2x">
+        <img src="https://picsum.photos/id/1018/1920/1080" alt="The Mountain's Edge">
+      </picture>
+      <div class="slide-darken"></div>
+      <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" data-index="1">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1015/640/640 1x, https://picsum.photos/id/1015/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1015/1024/1024 1x, https://picsum.photos/id/1015/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1015/1920/1080 1x, https://picsum.photos/id/1015/3840/2160 2x">
+        <img src="https://picsum.photos/id/1015/1920/1080" alt="River of Dreams">
+      </picture>
+      <div class="slide-darken"></div>
+      <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" data-index="2">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1019/640/640 1x, https://picsum.photos/id/1019/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1019/1024/1024 1x, https://picsum.photos/id/1019/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1019/1920/1080 1x, https://picsum.photos/id/1019/3840/2160 2x">
+        <img src="https://picsum.photos/id/1019/1920/1080" alt="Beneath Still Waters">
+      </picture>
+      <div class="slide-darken"></div>
+      <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" data-index="3">
+      <picture class="slide-image">
+        <source media="(max-width: 640px)" srcset="https://picsum.photos/id/1016/640/640 1x, https://picsum.photos/id/1016/1280/1280 2x">
+        <source media="(max-width: 1024px)" srcset="https://picsum.photos/id/1016/1024/1024 1x, https://picsum.photos/id/1016/2048/2048 2x">
+        <source media="(min-width: 1025px)" srcset="https://picsum.photos/id/1016/1920/1080 1x, https://picsum.photos/id/1016/3840/2160 2x">
+        <img src="https://picsum.photos/id/1016/1920/1080" alt="The Last Frontier">
+      </picture>
+      <div class="slide-darken"></div>
+      <div class="slide-overlay"></div>
+    </div>
+
+    <!-- Text overlays (separate from slides for independent fade) -->
+    <div class="text-content active" data-index="0">
+      <div class="genre">Drama / Adventure</div>
+      <h1>The Mountain's Edge</h1>
+      <p class="description">A breathtaking journey through the world's most treacherous peaks, where one climber must confront her past to survive.</p>
+      <div class="meta">
+        <span>2024</span>
+        <span>2h 14m</span>
+        <span>PG-13</span>
+      </div>
+    </div>
+    <div class="text-content" data-index="1">
+      <div class="genre">Nature / Documentary</div>
+      <h1>River of Dreams</h1>
+      <p class="description">Follow the incredible migration of salmon through pristine wilderness, a journey of survival spanning thousands of miles.</p>
+      <div class="meta">
+        <span>2024</span>
+        <span>1h 42m</span>
+        <span>G</span>
+      </div>
+    </div>
+    <div class="text-content" data-index="2">
+      <div class="genre">Thriller / Mystery</div>
+      <h1>Beneath Still Waters</h1>
+      <p class="description">When a small lakeside town's secrets begin to surface, detective Sarah Chen discovers the truth runs deeper than anyone imagined.</p>
+      <div class="meta">
+        <span>2024</span>
+        <span>2h 01m</span>
+        <span>R</span>
+      </div>
+    </div>
+    <div class="text-content" data-index="3">
+      <div class="genre">Sci-Fi / Action</div>
+      <h1>The Last Frontier</h1>
+      <p class="description">In a world transformed by climate change, a team of pioneers ventures into uncharted territory to find humanity's new home.</p>
+      <div class="meta">
+        <span>2024</span>
+        <span>2h 28m</span>
+        <span>PG-13</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <button class="nav-button prev" aria-label="Previous slide">&#8249;</button>
+    <button class="nav-button next" aria-label="Next slide">&#8250;</button>
+
+    <!-- Card indicators -->
+    <div class="indicators" id="indicators"></div>
+  </div>
+
+  <script>
+    class Carousel {
+      constructor(element, options = {}) {
+        this.carousel = element;
+        this.slides = Array.from(element.querySelectorAll('.slide'));
+        this.textContents = Array.from(element.querySelectorAll('.text-content'));
+        this.indicatorsContainer = element.querySelector('#indicators');
+        this.prevButton = element.querySelector('.nav-button.prev');
+        this.nextButton = element.querySelector('.nav-button.next');
+
+        this.currentIndex = 0;
+        this.isTransitioning = false;
+        this.isPaused = false;
+        this.autoAdvanceInterval = options.autoAdvanceInterval || 6000;
+        this.transitionDuration = options.transitionDuration || 900;
+        this.transitionTimeout = null;
+        this.textTimeout = null;
+
+        this.init();
+      }
+
+      init() {
+        // Create indicators
+        this.createIndicators();
+
+        // Set CSS variable for progress animation
+        this.carousel.style.setProperty('--duration', `${this.autoAdvanceInterval}ms`);
+
+        // Bind events
+        this.prevButton.addEventListener('click', () => this.prev());
+        this.nextButton.addEventListener('click', () => this.next());
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') this.prev();
+          if (e.key === 'ArrowRight') this.next();
+          if (e.key === ' ') {
+            e.preventDefault();
+            this.togglePause();
+          }
+        });
+
+        // Pause on hover
+        this.carousel.addEventListener('mouseenter', () => this.pause());
+        this.carousel.addEventListener('mouseleave', () => this.resume());
+
+        // Touch support for main slide area (not indicators)
+        let touchStartX = 0;
+        let touchStartedOnIndicators = false;
+
+        this.carousel.addEventListener('touchstart', (e) => {
+          // Check if touch started on the indicators area
+          touchStartedOnIndicators = e.target.closest('.indicators') !== null;
+          if (!touchStartedOnIndicators) {
+            touchStartX = e.touches[0].clientX;
+          }
+        }, { passive: true });
+
+        this.carousel.addEventListener('touchend', (e) => {
+          // Ignore if touch started on indicators
+          if (touchStartedOnIndicators) return;
+
+          const touchEndX = e.changedTouches[0].clientX;
+          const diff = touchStartX - touchEndX;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) this.next();
+            else this.prev();
+          }
+        }, { passive: true });
+
+        // Start auto-advance
+        this.startAutoAdvance();
+      }
+
+      createIndicators() {
+        // Extract data from slides and text content
+        this.slideData = this.slides.map((slide, index) => {
+          const textContent = this.textContents[index];
+          const imgElement = slide.querySelector('.slide-image img');
+          return {
+            image: imgElement ? imgElement.src : slide.querySelector('.slide-image').src,
+            title: textContent.querySelector('h1').textContent,
+            category: textContent.querySelector('.genre').textContent,
+          };
+        });
+
+        const totalSlides = this.slides.length;
+
+        this.slideData.forEach((data, index) => {
+          const card = document.createElement('div');
+          card.className = `indicator-card${index === 0 ? ' active' : ''}`;
+          card.innerHTML = `
+            <div class="progress-bar"><div class="progress"></div></div>
+            <img class="thumbnail" src="${data.image}" alt="${data.title}">
+            <div class="card-content">
+              <div class="card-label">${index + 1}/${totalSlides} ${data.category}</div>
+              <div class="card-title">${data.title}</div>
+            </div>
+            <button class="pause-btn" aria-label="Pause/Play">
+              <svg class="icon-pause" viewBox="0 0 10 10">
+                <rect x="1" y="1" width="3" height="8" rx="0.5"/>
+                <rect x="6" y="1" width="3" height="8" rx="0.5"/>
+              </svg>
+              <svg class="icon-play" viewBox="0 0 10 10">
+                <polygon points="2,1 9,5 2,9"/>
+              </svg>
+            </button>
+          `;
+
+          // Click on card navigates to that slide
+          card.addEventListener('click', (e) => {
+            // Don't navigate if clicking the pause button
+            if (!e.target.closest('.pause-btn')) {
+              this.goTo(index);
+            }
+          });
+
+          // Pause button click
+          const pauseBtn = card.querySelector('.pause-btn');
+          pauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePause();
+          });
+
+          this.indicatorsContainer.appendChild(card);
+        });
+
+        this.indicators = Array.from(this.indicatorsContainer.querySelectorAll('.indicator-card'));
+      }
+
+      goTo(index, direction = null) {
+        if (index === this.currentIndex) return;
+
+        // If a transition is in progress, interrupt it cleanly
+        if (this.isTransitioning) {
+          this.cancelTransition();
+        }
+
+        this.isTransitioning = true;
+        const prevIndex = this.currentIndex;
+        this.currentIndex = index;
+
+        // Determine direction if not specified
+        if (direction === null) {
+          direction = index > prevIndex ? 'next' : 'prev';
+        }
+
+        // Set direction class on carousel for CSS FIRST
+        this.carousel.classList.remove('direction-prev', 'direction-next');
+        this.carousel.classList.add(`direction-${direction}`);
+
+        // Get elements
+        const currentSlide = this.slides[prevIndex];
+        const nextSlide = this.slides[index];
+        const currentText = this.textContents[prevIndex];
+        const nextText = this.textContents[index];
+
+        // Get child elements (target img inside picture for transitions)
+        const currentImg = currentSlide.querySelector('.slide-image img');
+        const currentDarken = currentSlide.querySelector('.slide-darken');
+        const nextImg = nextSlide.querySelector('.slide-image img');
+        const nextDarken = nextSlide.querySelector('.slide-darken');
+
+        // Fade out current text immediately
+        currentText.classList.remove('active');
+
+        // Clean up ALL other slides to ensure clean state
+        this.slides.forEach((slide, i) => {
+          if (i !== prevIndex && i !== index) {
+            slide.classList.remove('active', 'exiting');
+          }
+        });
+
+        // Disable ALL transitions for setup
+        currentSlide.style.transition = 'none';
+        nextSlide.style.transition = 'none';
+        if (currentImg) currentImg.style.transition = 'none';
+        if (currentDarken) currentDarken.style.transition = 'none';
+        if (nextImg) nextImg.style.transition = 'none';
+        if (nextDarken) nextDarken.style.transition = 'none';
+
+        // Set up current slide as fully visible (will exit)
+        currentSlide.classList.remove('exiting');
+        currentSlide.classList.add('active');
+
+        // Set up next slide as hidden (will enter)
+        nextSlide.classList.remove('active', 'exiting');
+
+        // Force reflow to apply starting positions
+        this.carousel.offsetHeight;
+
+        // Re-enable transitions
+        currentSlide.style.transition = '';
+        nextSlide.style.transition = '';
+        if (currentImg) currentImg.style.transition = '';
+        if (currentDarken) currentDarken.style.transition = '';
+        if (nextImg) nextImg.style.transition = '';
+        if (nextDarken) nextDarken.style.transition = '';
+
+        // Force another reflow before starting animation
+        this.carousel.offsetHeight;
+
+        // Now start the transition
+        currentSlide.classList.remove('active');
+        currentSlide.classList.add('exiting');
+        nextSlide.classList.add('active');
+
+        // Update indicators
+        this.updateIndicators(index);
+
+        // Fade in new text after a slight delay
+        this.textTimeout = setTimeout(() => {
+          nextText.classList.add('active');
+        }, this.transitionDuration * 0.3);
+
+        // Clean up after transition
+        this.transitionTimeout = setTimeout(() => {
+          // Disable all transitions before removing exiting class to prevent flash
+          currentSlide.style.transition = 'none';
+          if (currentImg) currentImg.style.transition = 'none';
+          if (currentDarken) currentDarken.style.transition = 'none';
+
+          currentSlide.classList.remove('exiting');
+
+          // Force reflow then re-enable transitions
+          currentSlide.offsetHeight;
+          currentSlide.style.transition = '';
+          if (currentImg) currentImg.style.transition = '';
+          if (currentDarken) currentDarken.style.transition = '';
+
+          this.isTransitioning = false;
+        }, this.transitionDuration);
+
+        // Reset auto-advance timer
+        this.resetAutoAdvance();
+      }
+
+      cancelTransition() {
+        // Clear pending timeouts
+        clearTimeout(this.transitionTimeout);
+        clearTimeout(this.textTimeout);
+
+        // Clean up all slides immediately - disable transitions to prevent flashes
+        this.slides.forEach(slide => {
+          slide.style.transition = 'none';
+          slide.classList.remove('active', 'exiting');
+
+          // Also disable child element transitions (target img inside picture)
+          const img = slide.querySelector('.slide-image img');
+          const darken = slide.querySelector('.slide-darken');
+          if (img) img.style.transition = 'none';
+          if (darken) darken.style.transition = 'none';
+        });
+
+        // Force reflow
+        this.carousel.offsetHeight;
+
+        // Re-enable transitions
+        this.slides.forEach(slide => {
+          slide.style.transition = '';
+          const img = slide.querySelector('.slide-image img');
+          const darken = slide.querySelector('.slide-darken');
+          if (img) img.style.transition = '';
+          if (darken) darken.style.transition = '';
+        });
+
+        // Clean up all text content
+        this.textContents.forEach(text => {
+          text.classList.remove('active');
+        });
+
+        // Ensure current slide and text are properly active
+        this.slides[this.currentIndex].classList.add('active');
+        this.textContents[this.currentIndex].classList.add('active');
+
+        this.isTransitioning = false;
+      }
+
+      next() {
+        const nextIndex = (this.currentIndex + 1) % this.slides.length;
+        this.goTo(nextIndex, 'next');
+      }
+
+      prev() {
+        const prevIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+        this.goTo(prevIndex, 'prev');
+      }
+
+      updateIndicators(activeIndex) {
+        this.indicators.forEach((card, index) => {
+          card.classList.remove('active');
+
+          // Reset progress animation and any inline width
+          const progress = card.querySelector('.progress');
+          progress.style.animation = 'none';
+          progress.style.width = '';
+          progress.offsetHeight; // Force reflow
+          progress.style.animation = '';
+
+          if (index === activeIndex) {
+            card.classList.add('active');
+          }
+        });
+
+        // Scroll active card into view
+        this.scrollActiveCardIntoView(activeIndex);
+      }
+
+      scrollActiveCardIntoView(index) {
+        const card = this.indicators[index];
+        if (!card) return;
+
+        const container = this.indicatorsContainer;
+        const cardRect = card.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Check if card is fully visible
+        const isFullyVisible =
+          cardRect.left >= containerRect.left &&
+          cardRect.right <= containerRect.right;
+
+        if (!isFullyVisible) {
+          // Scroll to center the card in the container
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const containerCenter = container.offsetWidth / 2;
+          const scrollTarget = cardCenter - containerCenter;
+
+          container.scrollTo({
+            left: scrollTarget,
+            behavior: 'smooth'
+          });
+        }
+      }
+
+      startAutoAdvance() {
+        this.autoAdvanceTimer = setInterval(() => {
+          if (!this.isPaused) {
+            this.next();
+          }
+        }, this.autoAdvanceInterval);
+      }
+
+      resetAutoAdvance() {
+        clearInterval(this.autoAdvanceTimer);
+        if (!this.isPaused) {
+          this.updateIndicators(this.currentIndex);
+          this.startAutoAdvance();
+        }
+      }
+
+      pause() {
+        this.isPaused = true;
+        this.carousel.classList.add('paused');
+
+        // Pause indicator animation on active card
+        const activeCard = this.indicators[this.currentIndex];
+        const progress = activeCard.querySelector('.progress');
+        const computedStyle = getComputedStyle(progress);
+        progress.style.width = computedStyle.width;
+        progress.style.animation = 'none';
+      }
+
+      resume() {
+        this.isPaused = false;
+        this.carousel.classList.remove('paused');
+        this.resetAutoAdvance();
+      }
+
+      togglePause() {
+        if (this.isPaused) {
+          this.resume();
+        } else {
+          this.pause();
+        }
+      }
+    }
+
+    // Initialize carousel
+    document.addEventListener('DOMContentLoaded', () => {
+      const carousel = new Carousel(document.getElementById('carousel'), {
+        autoAdvanceInterval: 6000,
+        transitionDuration: 800
+      });
+    });
+  </script>
+</body>
+</html>
