@@ -229,11 +229,23 @@
     }
 
     @media (max-width: 640px) {
+      .slide-overlay {
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.7) 30%,
+          rgba(0, 0, 0, 0.3) 60%,
+          transparent 100%
+        );
+      }
+
       .text-content {
-        top: 50%;
+        top: auto;
+        bottom: 18%;
         left: 16%;
         right: 4%;
         max-width: none;
+        transform: none;
       }
 
       .text-content .genre {
