@@ -14,14 +14,22 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: #000;
-      overflow: hidden;
+      margin: 0;
     }
 
     .carousel {
       position: relative;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: min(850px, 100vh);
+      min-height: 550px;
       overflow: hidden;
+    }
+
+    @media (max-width: 640px) {
+      .carousel {
+        height: min(750px, 100vh);
+        min-height: 500px;
+      }
     }
 
     /* Slide container */
@@ -177,6 +185,52 @@
 
     .text-content .meta span {
       margin-right: 1rem;
+    }
+
+    /* Responsive typography */
+    @media (max-width: 1024px) {
+      .text-content {
+        max-width: 450px;
+      }
+
+      .text-content h1 {
+        font-size: 2.75rem;
+      }
+
+      .text-content .description {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .text-content {
+        bottom: 18%;
+        left: 4%;
+        right: 4%;
+        max-width: none;
+      }
+
+      .text-content .genre {
+        font-size: 0.75rem;
+      }
+
+      .text-content h1 {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .text-content .description {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .text-content .meta {
+        font-size: 0.8rem;
+      }
     }
 
     /* Navigation arrows */
