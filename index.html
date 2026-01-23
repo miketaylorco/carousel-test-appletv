@@ -530,7 +530,7 @@
 </head>
 <body>
   <script src="https://tristen.ca/hoverintent/dist/hoverintent.min.js"></script>
-  <section class="carousel" id="carousel" role="region" aria-roledescription="carousel" aria-label="Featured shows">
+  <section class="carousel" id="carousel" role="region" aria-roledescription="carousel" aria-label="Featured shows" tabindex="0">
     <!-- Slides (images with overlay) -->
     <div class="slide active" data-index="0">
       <picture class="slide-image">
@@ -680,10 +680,20 @@
         this.prevButton.addEventListener('click', () => this.prev());
         this.nextButton.addEventListener('click', () => this.next());
 
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowLeft') this.prev();
-          if (e.key === 'ArrowRight') this.next();
+        // Keyboard navigation - only when carousel has focus
+        this.carousel.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            this.prev();
+          }
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            this.next();
+          }
+          if (e.key === ' ') {
+            e.preventDefault();
+            this.togglePause();
+          }
         });
 
         // Pause when hovering over text content (where CTAs may be)
@@ -725,6 +735,13 @@
             else this.prev();
           }
         }, { passive: true });
+
+        // Respect reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+          this.userPaused = true;
+          this.updatePausedState();
+        }
 
         // Start auto-advance
         this.startAutoAdvance();
@@ -883,6 +900,10 @@
 
         // Update indicators
         this.updateIndicators(index);
+
+        // Announce slide change to screen readers
+        const statusEl = document.getElementById('carousel-status');
+        statusEl.textContent = `Showing slide ${index + 1} of ${this.slides.length}: ${this.slideData[index].title}`;
 
         // Fade in new text after a slight delay
         this.textTimeout = setTimeout(() => {
