@@ -89,6 +89,30 @@
       transform: translateX(12.12%);
     }
 
+    /* Increased parallax movement on mobile */
+    @media (max-width: 640px) {
+      .slide-image {
+        left: -30%; /* Larger offset for more movement */
+        width: 160%; /* Extra width: 100% + 30% on each side */
+      }
+
+      .slide-image img {
+        transform: translateX(18.75%); /* 30% of original = 18.75% of 160% */
+      }
+
+      .slide.exiting .slide-image img {
+        transform: translateX(-18.75%);
+      }
+
+      .carousel.direction-prev .slide:not(.active):not(.exiting) .slide-image img {
+        transform: translateX(-18.75%);
+      }
+
+      .carousel.direction-prev .slide.exiting .slide-image img {
+        transform: translateX(18.75%);
+      }
+    }
+
     /* Darkening overlay for incoming slides */
     .slide-darken {
       position: absolute;
